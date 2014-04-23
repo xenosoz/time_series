@@ -33,10 +33,10 @@ class LinearRegression:
         self.dimension = None
         self.trials = trials
         self.pick_rate = pick_rate
-        self.picks = max(1, int(self.trials * self.pick_rate))
         self.target_index = target_index
         self.verbose = verbose
         self.noise = noise
+        self.ranking = []
 
         if means is None:
             self.means = None
@@ -109,20 +109,22 @@ class LinearRegression:
         history = np.array(self.history)[1:]
         value = self.history[0][0]
 
-        ranking = []
         for i in range(self.trials):
             gene = self.new_gene()
             value_hat = np.sum(gene * history)
             error = value_hat - value
-            ranking.append((error**2, gene))
-        ranking.sort()
+            self.ranking.append((error**2, gene))
+        self.ranking.sort()
 
-        genes = [x[1] for x in ranking[:self.picks]]
+        picks = max(1, int(len(self.ranking) * self.pick_rate))
+        self.ranking = self.ranking[:picks]
+
+        genes = [x[1] for x in self.ranking]
         self.means = np.mean(genes, axis=0)
         self.stds = np.std(genes, axis=0)
         self.stds += self.noise
 
-        self.penalty_range = (ranking[0][0], ranking[self.picks-1][0])
+        self.penalty_range = (self.ranking[0][0], self.ranking[-1][0])
 
         if self.verbose:
             print("With penalty_range: {0}".format(self.penalty_range))
