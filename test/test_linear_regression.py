@@ -17,16 +17,18 @@ class TestLinearRegression(unittest.TestCase):
         r.feed([4, 0, 0, 1])
 
     def test_simple_regression(self):
-        r = LinearRegression(order=1, stds=[100, 100, 100, 1000])
+        r = LinearRegression(order=1, stds=[100, 100, 100, 1000], verbose=True)
         coeffs = np.array([1, 10, 100, 1000])
         old_value = np.array([0, 0, 0, 0])
-        for i in range(100):
-            value = np.random.uniform(-10, 10, 4)
+        for i in range(1000):
+            value = np.random.uniform(-10000, 10000, 4)
             value[0] = np.sum(old_value * coeffs)
             old_value = value
             r.feed(value)
 
         print("With penalty_range: {0}".format(r.penalty_range))
+        print()
+        print(r.ranking[0])
         print()
         print(r.means)
         print(r.stds)

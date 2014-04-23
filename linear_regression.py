@@ -25,6 +25,7 @@ class LinearRegression:
         r.means
         r.stds
         r.penalty_range
+        r.ranking[0]
     """
     
     def __init__(self, order=1, trials=100, pick_rate=0.3, target_index=0, noise=1e-12, means=None, stds=None, verbose=False):
