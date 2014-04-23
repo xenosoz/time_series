@@ -24,9 +24,10 @@ class LinearRegression:
 
         r.means
         r.stds
+        r.penalty_range
     """
     
-    def __init__(self, order=1, trials=100, pick_rate=0.3, target_index=0):
+    def __init__(self, order=1, trials=100, pick_rate=0.3, target_index=0, noise=1e-12, means=None, stds=None, verbose=False):
         self.history = deque()
         self.order = order
         self.dimension = None
@@ -34,6 +35,20 @@ class LinearRegression:
         self.pick_rate = pick_rate
         self.picks = max(1, int(self.trials * self.pick_rate))
         self.target_index = target_index
+        self.verbose = verbose
+        self.noise = noise
+
+        if means is None:
+            self.means = None
+        else:
+            # XXX: has numpy way?
+            self.means = np.array([means] * self.order)
+
+        if stds is None:
+            self.stds = None
+        else:
+            # XXX: has numpy way?
+            self.stds = np.array([stds] * self.order)
 
     def clear_history(self):
         self.history = deque()
@@ -44,8 +59,10 @@ class LinearRegression:
                 raise ValueError("dimension mismatch {0} (given {1})".format(self.dimension, dimension))
             return
         self.dimension = dimension
-        self.means = np.zeros((self.order, self.dimension))
-        self.stds = np.ones((self.order, self.dimension))
+        if self.means is None:
+            self.means = np.zeros((self.order, self.dimension))
+        if self.stds is None:
+            self.stds = np.ones((self.order, self.dimension))
 
     def set_header(self, header):
         self.set_dimension(len(header))
@@ -67,12 +84,12 @@ class LinearRegression:
         self.feed_values(values)
 
     def feed(self, obj):
-        if isinstance(obj, (list, tuple)):
+        if isinstance(obj, (list, tuple, np.ndarray)):
             self.feed_values(obj)
         elif isinstance(obj, str):
             self.feed_line(obj)
         else:
-            raise ValueError("input type must be list, tuple or str (given {0}).".format(type(obj)))
+            raise ValueError("input type must be list, tuple, np.ndarray or str (given {0}).".format(type(obj)))
 
     def new_gene(self):
         # XXX: numpy-way for this?
@@ -103,11 +120,13 @@ class LinearRegression:
         genes = [x[1] for x in ranking[:self.picks]]
         self.means = np.mean(genes, axis=0)
         self.stds = np.std(genes, axis=0)
+        self.stds += self.noise
 
-        min_penalty = ranking[0][0]
-        max_penalty = ranking[self.picks-1][0]
-        print("With penalty_range: ({0}, {1})".format(min_penalty, max_penalty))
-        print()
-        print(self.means)
-        print(self.stds)
-        print()
+        self.penalty_range = (ranking[0][0], ranking[self.picks-1][0])
+
+        if self.verbose:
+            print("With penalty_range: {0}".format(self.penalty_range))
+            print()
+            print(self.means)
+            print(self.stds)
+            print()
