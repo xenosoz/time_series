@@ -4,6 +4,7 @@
 from collections import deque
 import random
 import numpy as np
+from operator import itemgetter
 
 class LinearRegression:
     """
@@ -25,7 +26,7 @@ class LinearRegression:
         r.means
         r.stds
         r.penalty_range
-        r.ranking[0]
+        r.ranking and r.ranking[0]  # r.ranking may be an empty list.
     """
     
     def __init__(self, order=1, trials=100, pick_rate=0.3, target_index=0, noise=1e-12, means=None, stds=None, verbose=False):
@@ -110,12 +111,19 @@ class LinearRegression:
         history = np.array(self.history)[1:]
         value = self.history[0][0]
 
+        # Reevalutate alive genes.
+        for i, (_, gene) in enumerate(self.ranking):
+            value_hat = np.sum(gene * history)
+            error = value_hat - value
+            self.ranking[i] = (error**2, gene)
+
+        # Add new random genes.
         for i in range(self.trials):
             gene = self.new_gene()
             value_hat = np.sum(gene * history)
             error = value_hat - value
             self.ranking.append((error**2, gene))
-        self.ranking.sort()
+        self.ranking.sort(key=itemgetter(0))
 
         picks = max(1, int(len(self.ranking) * self.pick_rate))
         self.ranking = self.ranking[:picks]
