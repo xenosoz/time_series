@@ -17,19 +17,18 @@ class TestLinearRegression(unittest.TestCase):
         r.feed([4, 0, 0, 1])
 
     def test_simple_regression(self):
-        r = LinearRegression(order=1, stds=[100, 100, 100, 1000])
+        r = LinearRegression(order=1, stds=[100, 100, 100, 1000], trials=200)
         coeffs = np.array([1, 10, 100, 1000])
         old_value = np.array([0, 0, 0, 0])
-        for turns in range(1, 1001):
+        for datum_id in range(10):
             value = np.random.uniform(-1000, 1000, 4)
             value[0] = np.sum(old_value * coeffs)
             old_value = value
             r.feed(value)
-            if r.ranking and r.ranking[0][0] == 0:
-                """Stopping here is not a good idea in general: may hit penalty == 0 by some gene and test case."""
-                break
 
-        print("With {0} turns, penalty_range: {1}".format(turns, r.penalty_range))
+        r.fit()
+
+        print("With penalty_range: {0}".format(r.penalty_range))
         print()
         print(r.ranking[0])
         print()
